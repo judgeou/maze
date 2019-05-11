@@ -1,6 +1,10 @@
 <template>
-  <div>
-    Hello div
+  <div class="div-matrix">
+    <div v-for="(row, x) in matrix" :key="x">
+      <div class="cell" :class="{ black: p <= 0 }" v-for="(p, y) in row" :key="y" :style="{ left: `${y * 2.5}em`, top: `${x * 2.5}em` }">
+
+      </div>
+    </div>
   </div>
 </template>
 
@@ -15,7 +19,13 @@ const m = [
 ]
 
 export default {
+  data () {
+    return {
+      matrix: []
+    }
+  },
   created () {
+    this.matrix = m
     console.log(
       solveMaze(m, [0, 0], [3, 4])
     )
@@ -24,5 +34,16 @@ export default {
 </script>
 
 <style>
-
+.div-matrix {
+  position: relative;
+}
+.cell {
+  border: 1px black solid;
+  width: 2em;
+  height: 2em;
+  position:absolute;
+}
+.black {
+  background: black;
+}
 </style>
