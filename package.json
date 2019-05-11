@@ -1,0 +1,17 @@
+{
+  "name": "maze",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "ouzian",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "poi": "^12.6.8",
+    "vue": "^2.6.10",
+    "vue-router": "^3.0.6",
+    "vue-template-compiler": "^2.6.10"
+  },
+  "scripts": {
+    "dev": "poi --serve"
+  }
+}
