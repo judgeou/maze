@@ -42,10 +42,10 @@ export default {
   },
   created () {
     const m = this.matrix = [
-      [1, 0, 0, 0, 0],
+      [1, 0, 0, 0, 1],
       [1, 1, 1, 1, 1],
-      [0, 1, 0, 1, 0],
-      [0, 1, 0, 1, 1]
+      [0, 0, 0, 1, 1],
+      [0, 0, 0, 1, 1]
     ]
     const { start, end } = this
     this.paths = solveMaze(m, start, end)
