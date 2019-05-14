@@ -6,9 +6,10 @@
 
     <div class="div-matrix">
       <div v-for="(row, x) in matrix" :key="x">
-        <div class="cell" 
-          :class="{ black: p <= 0, path: isPath(x, y) }"
-          v-for="(p, y) in row" :key="y" :style="{ left: `${y * 2.5}em`, top: `${x * 2.5}em` }">
+        <div class="cell"
+          :class="{ black: p <= 0, path: isPath(x, y), checked: isPassed(x, y) }"
+          v-for="(p, y) in row" :key="y" :style="{ left: `${y * 2.5}em`, top: `${x * 2.5}em` }"
+          @mouseenter="onMouseIn(x, y)">
           {{ start[0] === x && start[1] === y ? 'S' : '' }}
           {{ end[0] === x && end[1] === y ? 'E' : '' }}
         </div>
@@ -28,16 +29,41 @@ export default {
       end: [7, 9],
       matrix: [],
       paths: [],
+      nodes: []
     }
   },
   methods: {
+    onMouseIn (x, y) {
+      this.end = [x, y]
+      this.solve()
+    },
     isPath (x, y) {
-      const p = this.paths.find(path => path[0] === x && path[1] === y)
-      return p
+      const { nodes } = this
+      const row = nodes[x]
+      if (row) {
+        const node = row[y]
+        if (node) {
+          return node.isPath
+        }
+      }
+      return false
+    },
+    isPassed (x, y) {
+      const { nodes } = this
+      const row = nodes[x]
+      if (row) {
+        const node = row[y]
+        if (node) {
+          return node.passed
+        }
+      }
+      return false
     },
     solve () {
-      const { matrix, start, end} = this
-      this.paths = solveMaze(matrix, start, end)
+      const { matrix, start, end } = this
+      const { paths, nodes } = solveMaze(matrix, start, end)
+      this.paths = paths
+      this.nodes = nodes
     }
   },
   created () {
@@ -70,7 +96,10 @@ export default {
   text-align: center;
 }
 .cell.path {
-  border: 1px red solid;
+  background: #3498db;
+}
+.cell.checked {
+  border: 2px red solid;
 }
 .black {
   background: black;
