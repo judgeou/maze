@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="top">
-
+      <button @click="solve">Solve</button>
     </div>
 
     <div class="div-matrix">
@@ -24,27 +24,33 @@ import { solveMaze } from '../lib/matrix'
 export default {
   data () {
     return {
-      start: [0, 0],
-      end: [3, 3],
+      start: [3, 4],
+      end: [7, 9],
       matrix: [],
-      paths: []
+      paths: [],
     }
   },
   methods: {
     isPath (x, y) {
       const p = this.paths.find(path => path[0] === x && path[1] === y)
       return p
+    },
+    solve () {
+      const { matrix, start, end} = this
+      this.paths = solveMaze(matrix, start, end)
     }
   },
   created () {
     const m = this.matrix = [
-      [1, 1, 1, 1, 1],
-      [1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 1],
-      [1, 1, 1, 1, 1]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     ]
-    const { start, end } = this
-    this.paths = solveMaze(m, start, end)
   }
 }
 </script>
