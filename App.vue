@@ -1,15 +1,17 @@
 <template>
   <div>
-    <div-matirx></div-matirx>
+    <ca></ca>
   </div>
 </template>
 
 <script>
 import DivMatirx from './components/DivMatrix.vue'
+import Canvas from './components/Canvas.vue'
 
 export default {
   components: {
-    DivMatirx
+    DivMatirx,
+    ca: Canvas
   }
 }
 </script>

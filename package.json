@@ -6,12 +6,15 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
+    "fabric": "^2.7.0",
+    "node-gyp": "^4.0.0",
     "poi": "^12.6.8",
     "vue": "^2.6.10",
     "vue-router": "^3.0.6",
     "vue-template-compiler": "^2.6.10"
   },
   "scripts": {
-    "dev": "poi --serve"
+    "dev": "poi --serve",
+    "rebuild": "node-gyp rebuild"
   }
 }
