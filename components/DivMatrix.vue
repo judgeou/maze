@@ -9,7 +9,7 @@
         <div class="cell"
           :class="{ black: p <= 0, path: isPath(x, y), checked: isPassed(x, y) }"
           v-for="(p, y) in row" :key="y" :style="{ left: `${y * 2.5}em`, top: `${x * 2.5}em` }"
-          @mouseenter="onMouseIn(x, y)">
+          @mouseenter="onMouseIn(x, y)" @click="onClick(x, y)">
           {{ start[0] === x && start[1] === y ? 'S' : '' }}
           {{ end[0] === x && end[1] === y ? 'E' : '' }}
         </div>
@@ -29,11 +29,16 @@ export default {
       end: [7, 9],
       matrix: [],
       paths: [],
-      nodes: []
+      nodes: [],
+      pointNode: {}
     }
   },
   methods: {
     onMouseIn (x, y) {
+      const pn = this.pointNode = this.nodes[x][y]
+      console.log(pn)
+    },
+    onClick (x, y) {
       this.end = [x, y]
       this.solve()
     },
@@ -69,13 +74,13 @@ export default {
   created () {
     const m = this.matrix = [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
       [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 0, 1, 0, 0, 1],
+      [1, 1, 1, 1, 1, 0, 1, 1, 0, 1],
+      [1, 1, 1, 1, 1, 0, 1, 1, 0, 1],
+      [1, 0, 0, 0, 0, 0, 1, 0, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
     ]
   }
 }
