@@ -12,6 +12,7 @@
           @mouseenter="onMouseIn(x, y)" @click="onClick(x, y)">
           {{ start[0] === x && start[1] === y ? 'S' : '' }}
           {{ end[0] === x && end[1] === y ? 'E' : '' }}
+          {{ getDistance(x, y) }}
         </div>
       </div>
     </div>
@@ -64,6 +65,16 @@ export default {
       }
       return false
     },
+    getDistance (x, y) {
+      const { nodes } = this
+      const row = nodes[x]
+      if (row) {
+        const node = row[y]
+        if (node && node.startDistance > 0 && node.endDistance > 0) {
+          return `${node.startDistance}:${node.endDistance}`
+        }
+      }
+    },
     solve () {
       const { matrix, start, end } = this
       const { paths, nodes } = solveMaze(matrix, start, end)
@@ -79,7 +90,7 @@ export default {
       [1, 1, 1, 1, 1, 0, 1, 1, 0, 1],
       [1, 1, 1, 1, 1, 0, 0, 0, 0, 1],
       [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [0, 1, 0, 1, 0, 0, 1, 0, 0, 0],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     ]
     // const m = this.matrix = [
