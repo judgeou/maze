@@ -43,23 +43,25 @@ export default {
       const { width, height } = image
       canvas.width = width
       canvas.height = height
-      const context = canvas.getContext('2d')
-      context.drawImage(image, 0, 0, width, height);
 
-      const mapArr = []
+      const mapArr = new Array(width * height)
       const imageData = await Jimp.read(image.src)
+      let i = 0
       imageData.scan(0, 0, imageData.bitmap.width, imageData.bitmap.height, (x, y, idx) => {
         const red = imageData.bitmap.data[idx + 0]
         const green = imageData.bitmap.data[idx + 1]
         const blue = imageData.bitmap.data[idx + 2]
         if (red === 255 && green === 255 && blue === 255) {
-          mapArr.push(1)
+          mapArr[i] = 1
         } else {
-          mapArr.push(0)
+          mapArr[i] = 0
         }
+        i++
       })
-
       this.mapArr = mapArr
+
+      const context = canvas.getContext('2d')
+      context.drawImage(image, 0, 0, width, height);
 
       this.width = imageData.bitmap.width
       this.height = imageData.bitmap.height
