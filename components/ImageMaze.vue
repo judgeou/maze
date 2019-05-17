@@ -1,9 +1,9 @@
 <template>
   <div>
-    Hello
     <img ref="image" src="../assets/maze.gif" alt="">
     <canvas ref="canvas" @click="onCanvasClick"></canvas>
     <button @click="goSolve">solve</button>
+    <button @click="clearPaths">clear</button>
   </div>
 </template>
 
@@ -13,12 +13,13 @@ import { solveMaze } from '../lib/matrix'
 export default {
   data () {
     return {
-      mapArr: []
+      mapArr: [],
+      clickPoints: []
     }
   },
   methods: {
-    goSolve (endXY = [164, 10]) {
-      const { paths } = solveMaze(this.mapArr, [13, 50], endXY)
+    goSolve (startXY, endXY) {
+      const { paths } = solveMaze(this.mapArr, startXY, endXY)
       const { canvas } = this.$refs
       const context = canvas.getContext('2d')
       context.fillStyle = "#FF0000"
@@ -27,7 +28,21 @@ export default {
       }
     },
     onCanvasClick (e) {
-      this.goSolve([e.offsetX, e.offsetY])
+      const { clickPoints } = this
+      clickPoints.push([e.offsetX, e.offsetY])
+      const { length } = clickPoints
+      if (length >= 2) {
+        this.goSolve(clickPoints[length - 2], clickPoints[length - 1])
+      }
+    },
+    clearPaths () {
+      const { image, canvas } = this.$refs
+      const { width, height } = image
+      canvas.width = width
+      canvas.height = height
+      const context = canvas.getContext('2d')
+      context.drawImage(image, 0, 0, width, height);
+      this.clickPoints = []
     }
   },
   mounted () {
