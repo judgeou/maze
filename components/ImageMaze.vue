@@ -1,6 +1,7 @@
 <template>
   <div>
-    <img ref="image" src="../assets/maze2.png" alt="">
+    <input type="text" v-model="imgUrl">
+    <img ref="image" :src="imgUrl" alt="">
     <canvas ref="canvas" @click="onCanvasClick"></canvas>
     <button @click="goSolve">solve</button>
     <button @click="clearPaths">clear</button>
@@ -14,6 +15,7 @@ import Jimp from 'jimp'
 export default {
   data () {
     return {
+      imgUrl: 'about:blank',
       mapArr: [],
       clickPoints: [],
       width: 0,

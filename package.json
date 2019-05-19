@@ -14,6 +14,7 @@
     "vue-template-compiler": "^2.6.10"
   },
   "scripts": {
-    "dev": "poi --serve"
+    "dev": "poi --serve",
+    "build": "poi --prod"
   }
 }
