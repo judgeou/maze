@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
+    "heap": "^0.2.6",
     "jimp": "^0.6.4",
     "poi": "^12.6.8",
     "vue": "^2.6.10",

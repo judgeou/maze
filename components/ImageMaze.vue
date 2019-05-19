@@ -27,7 +27,7 @@ export default {
       const context = canvas.getContext('2d')
       context.fillStyle = "#FF0000"
       for (let path of paths) {
-        context.fillRect(path[0], path[1], 2, 2)
+        context.fillRect(path[0], path[1], 1, 1)
       }
     },
     onCanvasClick (e) {
