@@ -62,7 +62,12 @@ export default {
       }
     },
     genMapArr (imageData, mapArr, walkColor, stopColor) {
-      console.log( colorDiff(walkColor, stopColor) )
+      const MAX_DIFF = 9
+      const startendDiff = colorDiff(walkColor, stopColor)
+      console.log(startendDiff)
+      if (startendDiff > MAX_DIFF) {
+        throw Error('起点与终点的颜色差别过大')
+      }
       let i = 0
       imageData.scan(0, 0, imageData.bitmap.width, imageData.bitmap.height, (x, y, idx) => {
         const red = imageData.bitmap.data[idx + 0]
@@ -70,7 +75,7 @@ export default {
         const blue = imageData.bitmap.data[idx + 2]
         const colorDistance = colorDiff(walkColor, { r: red, g: green, b: blue })
 
-        if (colorDistance < 8) {
+        if (colorDistance < MAX_DIFF) {
           mapArr[i] = 1
         } else {
           mapArr[i] = 0
@@ -94,14 +99,15 @@ export default {
         const startColor = Jimp.intToRGBA(imageData.getPixelColor(startPoint[0], startPoint[1]))
         const endColor = Jimp.intToRGBA(imageData.getPixelColor(endPoint[0], endPoint[1]))
 
-        this.genMapArr(imageData, mapArr, startColor, endColor)
-        this.mapArr = mapArr
-        this.msg = '正在计算最短路径。。。'
         try {
+          this.genMapArr(imageData, mapArr, startColor, endColor)
+          this.mapArr = mapArr
+          this.msg = '正在计算最短路径。。。'
           const { paths, checkCount } = this.goSolve(clickPoints[length - 2], clickPoints[length - 1], width, height)
           this.msg = `成功计算最短路径，实际距离 ${paths.length}，探索了节点数 ${checkCount}`
         } catch (err) {
           this.msg = err
+          throw err
         }
       }
     },
@@ -118,6 +124,7 @@ export default {
       this.height = height
 
       this.clickPoints = []
+      this.msg = ''
     }
   },
   created () {
