@@ -20,10 +20,6 @@ import Jimp from 'jimp'
 import { rgb2lab, deltaE } from '../lib/color'
 import { setTimeout } from 'timers';
 
-function colorDiff (c1, c2) {
-  return deltaE(rgb2lab([ c1.r, c1.g, c1.b ]), rgb2lab([ c2.r, c2.g, c2.b ]))
-}
-
 export default {
   data () {
     return {
@@ -63,7 +59,10 @@ export default {
     },
     genMapArr (imageData, mapArr, walkColor, stopColor) {
       const MAX_DIFF = 9
-      const startendDiff = colorDiff(walkColor, stopColor)
+      const startendDiff = Module._colorDiff(
+        walkColor.r, walkColor.g, walkColor.b,
+        stopColor.r, stopColor.g, stopColor.b 
+      )
       console.log(startendDiff)
       if (startendDiff > MAX_DIFF) {
         throw Error('起点与终点的颜色差别过大')
@@ -73,7 +72,7 @@ export default {
         const red = imageData.bitmap.data[idx + 0]
         const green = imageData.bitmap.data[idx + 1]
         const blue = imageData.bitmap.data[idx + 2]
-        const colorDistance = colorDiff(walkColor, { r: red, g: green, b: blue })
+        const colorDistance = Module._colorDiff(walkColor.r, walkColor.g, walkColor.b, red, green, blue)
 
         if (colorDistance < MAX_DIFF) {
           mapArr[i] = 1
