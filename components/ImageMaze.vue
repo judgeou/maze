@@ -1,12 +1,11 @@
 <template>
   <div>
-    <p>
-      <b>{{ msg }}</b>
-    </p>
     <div>
       <input type="file" accept="image/*" @change="onFile">    <button @click="clearPaths">重置</button>
+      <b>{{ msg }}</b>
     </div>
-    <img v-show="false" ref="image" :src="imgUrl" alt="">
+
+    <img v-show="false" ref="image" :src="imgUrl" @load="imgReady" alt="">
 
     <div>
       <canvas ref="canvas" @click="onCanvasClick"></canvas>
@@ -24,7 +23,7 @@ export default {
   data () {
     return {
       msg: '',
-      imgUrl: '',
+      imgUrl: require('../assets/maze.png'),
       mapArr: [],
       clickPoints: [],
       width: 0,
@@ -38,11 +37,11 @@ export default {
       if (files.length) {
         vm.msg = '正在处理图片。。。'
         vm.imgUrl = URL.createObjectURL(files[0])
-        setTimeout(() => {
-          vm.clearPaths()
-          vm.msg = '图片处理完毕，点击图片任意位置决定起点与终点'
-        }, 1000)
       }
+    },
+    imgReady () {
+      this.clearPaths()
+      vm.msg = '点击图片任意位置决定起点与终点'
     },
     goSolve (startXY, endXY, width, height) {
       const { paths, checkCount } = solveMaze(this.mapArr, startXY, endXY, width, height)
@@ -87,8 +86,12 @@ export default {
       const { image } = this.$refs
       clickPoints.push([e.offsetX, e.offsetY])
       const { length } = clickPoints
+      if (length >= 1) {
+        this.msg = `起点: (x: ${e.offsetX}, y: ${e.offsetY})`
+      }
       if (length >= 2) {
-        this.msg = '正在识别可通行节点。。。'
+        this.msg = `终点: (x: ${e.offsetX}, y: ${e.offsetY}), 正在扫描可通行区域`
+        // this.msg = '正在识别可通行节点。。。'
         const mapArr = new Array(width * height)
         const imageData = await Jimp.read(image.src)
 
