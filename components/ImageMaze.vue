@@ -76,12 +76,12 @@ export default {
         checkCount
       }
     },
-    async genMapArr (imageData, walkColor, stopColor) {
+    async genMapArr (startPoint, endPoint) {
       let buffer = await fetchFile(this.imgUrl)
       let result = vm.$root.native.gen_map_array(
         buffer,
-        [ walkColor.r, walkColor.g, walkColor.b ],
-        [ stopColor.r, stopColor.g, stopColor.b ]
+        startPoint,
+        endPoint
       )
       return result
     },
@@ -97,16 +97,12 @@ export default {
         this.msg = `终点: (x: ${e.offsetX}, y: ${e.offsetY}), 正在扫描可通行区域`
         // this.msg = '正在识别可通行节点。。。'
         const mapArr = new Array(width * height)
-        const imageData = await Jimp.read(image.src)
 
         const startPoint = clickPoints[length - 2]
         const endPoint = clickPoints[length - 1]
 
-        const startColor = Jimp.intToRGBA(imageData.getPixelColor(startPoint[0], startPoint[1]))
-        const endColor = Jimp.intToRGBA(imageData.getPixelColor(endPoint[0], endPoint[1]))
-
         try {
-          this.mapArr = await this.genMapArr(imageData, startColor, endColor)
+          this.mapArr = await this.genMapArr(startPoint, endPoint)
           this.msg = '正在计算最短路径。。。'
           await this.$nextTick()
           const { paths, checkCount } = this.goSolve(clickPoints[length - 2], clickPoints[length - 1], width, height)

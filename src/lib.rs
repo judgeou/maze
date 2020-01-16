@@ -27,12 +27,12 @@ pub fn main_js() -> Result<(), JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn gen_map_array (buffer: Box<[u8]>, walk_color: Box<[u8]>, stop_color: Box<[u8]>) -> Vec<u8> {
-  let max_diff = 81.0;
-  // let startend_diff = color_diff(&walk_color, &stop_color);
-  
+pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>, stop_point: Box<[u32]>) -> Vec<u8> {
   let img = image::load_from_memory(&buffer).unwrap();
   let (width, height) = img.dimensions();
+
+  let start_pixel = img.get_pixel(start_point[0], start_point[1]);
+  let walk_color = [start_pixel[0], start_pixel[1], start_pixel[2]];
 
   let mut result = Vec::with_capacity((width * height) as usize);
   for h in 0..height {
@@ -43,6 +43,7 @@ pub fn gen_map_array (buffer: Box<[u8]>, walk_color: Box<[u8]>, stop_color: Box<
       let blue = pixel[2];
 
       let color_distance = color_diff_lab(&walk_color, &[ red, green, blue ]);
+      let max_diff = 81.0;
       if color_distance < max_diff {
         result.push(1)
       } else {
@@ -65,7 +66,7 @@ fn color_diff_rgb (walk_color: &[u8], stop_color: &[u8]) -> f32 {
   let dr = (walk_color[0] as i16 - stop_color[0] as i16).abs();
   let dg = (walk_color[1] as i16 - stop_color[1] as i16).abs();
   let db = (walk_color[2] as i16 - stop_color[2] as i16).abs();
-  
+
   ((dr * dr) + (dg * dg) + (db * db)).into()
 }
 
