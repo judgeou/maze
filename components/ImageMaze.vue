@@ -5,10 +5,10 @@
       <b>{{ msg }}</b>
     </div>
 
-    <img v-show="false" ref="image" :src="imgUrl" @load="imgReady" alt="">
+    <img v-if="imgUrl" v-show="false" ref="image" :src="imgUrl" @load="imgReady" alt="">
 
     <div>
-      <canvas ref="canvas" @click="onCanvasClick"></canvas>
+      <canvas v-if="imgUrl" ref="canvas" @click="onCanvasClick"></canvas>
     </div>
   </div>
 </template>
@@ -19,11 +19,31 @@ import Jimp from 'jimp'
 import { rgb2lab, deltaE } from '../lib/color'
 import { setTimeout } from 'timers';
 
+function colorDiff (c1, c2) {
+  return deltaE(rgb2lab([ c1.r, c1.g, c1.b ]), rgb2lab([ c2.r, c2.g, c2.b ]))
+}
+
+async function readFile (file) {
+  return new Promise((resolve, reject) => {
+    let reader = new FileReader()
+    reader.readAsArrayBuffer(file)
+    reader.onloadend = () => {
+      resolve(reader.result)
+    }
+  })
+}
+
+async function fetchFile (url) {
+  let res = await fetch(url)
+  let buffer = await res.arrayBuffer()
+  return new Uint8Array(buffer)
+}
+
 export default {
   data () {
     return {
       msg: '',
-      imgUrl: require('../assets/maze.png'),
+      imgUrl: require('../assets/maze.jpg'),
       mapArr: [],
       clickPoints: [],
       width: 0,
@@ -56,30 +76,14 @@ export default {
         checkCount
       }
     },
-    genMapArr (imageData, mapArr, walkColor, stopColor) {
-      const MAX_DIFF = 9
-      const startendDiff = Module._colorDiff(
-        walkColor.r, walkColor.g, walkColor.b,
-        stopColor.r, stopColor.g, stopColor.b 
+    async genMapArr (imageData, walkColor, stopColor) {
+      let buffer = await fetchFile(this.imgUrl)
+      let result = vm.$root.native.gen_map_array(
+        buffer,
+        [ walkColor.r, walkColor.g, walkColor.b ],
+        [ stopColor.r, stopColor.g, stopColor.b ]
       )
-      console.log(startendDiff)
-      if (startendDiff > MAX_DIFF) {
-        throw Error('起点与终点的颜色差别过大')
-      }
-      let i = 0
-      imageData.scan(0, 0, imageData.bitmap.width, imageData.bitmap.height, (x, y, idx) => {
-        const red = imageData.bitmap.data[idx + 0]
-        const green = imageData.bitmap.data[idx + 1]
-        const blue = imageData.bitmap.data[idx + 2]
-        const colorDistance = Module._colorDiff(walkColor.r, walkColor.g, walkColor.b, red, green, blue)
-
-        if (colorDistance < MAX_DIFF) {
-          mapArr[i] = 1
-        } else {
-          mapArr[i] = 0
-        }
-        i++
-      })
+      return result
     },
     async onCanvasClick (e) {
       const { clickPoints, width, height } = this
@@ -102,8 +106,7 @@ export default {
         const endColor = Jimp.intToRGBA(imageData.getPixelColor(endPoint[0], endPoint[1]))
 
         try {
-          this.genMapArr(imageData, mapArr, startColor, endColor)
-          this.mapArr = mapArr
+          this.mapArr = await this.genMapArr(imageData, startColor, endColor)
           this.msg = '正在计算最短路径。。。'
           const { paths, checkCount } = this.goSolve(clickPoints[length - 2], clickPoints[length - 1], width, height)
           this.msg = `成功计算最短路径，实际距离 ${paths.length}，探索了节点数 ${checkCount}`

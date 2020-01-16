@@ -1105,6 +1105,15 @@
     source-map "~0.6.1"
     vue-template-es2015-compiler "^1.9.0"
 
+"@wasm-tool/wasm-pack-plugin@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npm.taobao.org/@wasm-tool/wasm-pack-plugin/download/@wasm-tool/wasm-pack-plugin-1.1.0.tgz#94016deba0f59306d1a9f0cb3b15144d8cd9ab34"
+  integrity sha1-lAFt66D1kwbRqfDLOxUUTYzZqzQ=
+  dependencies:
+    chalk "^2.4.1"
+    command-exists "^1.2.7"
+    watchpack "^1.6.0"
+
 "@webassemblyjs/ast@1.8.5":
   version "1.8.5"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.8.5.tgz#51b1c5fe6576a34953bf4b253df9f0d490d9e359"
@@ -2122,6 +2131,11 @@ color@^3.0.0:
   dependencies:
     color-convert "^1.9.1"
     color-string "^1.5.2"
+
+command-exists@^1.2.7:
+  version "1.2.8"
+  resolved "https://registry.npm.taobao.org/command-exists/download/command-exists-1.2.8.tgz#715acefdd1223b9c9b37110a149c6392c2852291"
+  integrity sha1-cVrO/dEiO5ybNxEKFJxjksKFIpE=
 
 commander@2.17.x:
   version "2.17.1"
@@ -7155,7 +7169,7 @@ vue@^2.6.10:
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.6.10.tgz#a72b1a42a4d82a721ea438d1b6bf55e66195c637"
   integrity sha512-ImThpeNU9HbdZL3utgMCq0oiMzAkt1mcgy3/E6zWC/G6AaQoeuFdsl9nDhTDU3X1R6FK7nsIUuRACVcjI+A2GQ==
 
-watchpack@^1.5.0:
+watchpack@^1.5.0, watchpack@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/watchpack/-/watchpack-1.6.0.tgz#4bc12c2ebe8aa277a71f1d3f14d685c7b446cd00"
   integrity sha512-i6dHe3EyLjMmDlU1/bGQpEw25XSjkJULPuAVKCbNRefQVq48yXKUpwg538F7AZTf9kyr57zj++pQFltUa5H7yA==
