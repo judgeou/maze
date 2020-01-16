@@ -26,8 +26,21 @@ pub fn main_js() -> Result<(), JsValue> {
     Ok(())
 }
 
+pub struct Node {
+  pub x: i32,
+  pub y: i32,
+  pub end_distance: i32,
+  pub start_distance: i32,
+  pub distance: i32,
+  pub passed: bool,
+  pub is_queue: bool,
+  pub parent: Box<Node>,
+  pub is_path: bool,
+  pub next_nodes: Vec<Box<Node>>
+}
+
 #[wasm_bindgen]
-pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>, stop_point: Box<[u32]>) -> Vec<u8> {
+pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>) -> Vec<u8> {
   let img = image::load_from_memory(&buffer).unwrap();
   let (width, height) = img.dimensions();
 
@@ -53,6 +66,15 @@ pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>, stop_point: Bo
   }
 
   return result;
+}
+
+#[wasm_bindgen]
+pub fn solve_maze (matrix: Box<[u8]>, start: Box<[u8]>, end: Box<[u8]>, wdith: usize, height: usize) -> i32 {
+  1
+}
+
+fn build_nodes (matrix: Box<[u8]>, end: Box<[u8]>, start: Box<[u8]>, width: usize, height: usize) {
+  
 }
 
 fn color_diff_lab (walk_color: &[u8], stop_color: &[u8]) -> f32 {
