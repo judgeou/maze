@@ -105,6 +105,8 @@ export default {
           this.mapArr = await this.genMapArr(startPoint, endPoint)
           this.msg = '正在计算最短路径。。。'
           await this.$nextTick()
+          let r = vm.$root.native.solve_maze(this.mapArr, clickPoints[length - 2], clickPoints[length - 1], width, height)
+          console.log(r)
           const { paths, checkCount } = this.goSolve(clickPoints[length - 2], clickPoints[length - 1], width, height)
           this.msg = `成功计算最短路径，实际距离 ${paths.length}，探索了节点数 ${checkCount}`
         } catch (err) {
