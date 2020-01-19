@@ -113,15 +113,50 @@ fn build_nodes (matrix: &Box<[u8]>, end: &Box<[usize]>, width: usize, height: us
   for i in 0..nodes.len() {
     let node = &nodes[i];
     match node {
-      Some (node) => {
-        let node_mut = nodes[node.y * width + node.x].unwrap();
-
-        node_mut.next_nodes = vec![];
+      Some(node_v) => {
+        let next = get_next_nodes(&nodes, node_v.x, node_v.y, width);
+        
       },
       None => {}
     }
   }
+
   nodes
+}
+
+fn get_next_nodes (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) -> Vec<usize> {
+  let mut result = vec![];
+
+  let mut set_node = |x: usize, y: usize| {
+    let node = get_node(nodes, x, y, width);
+    match node {
+      Some(node) => result.push(get_node_index(x, y, width)),
+      None => {}
+    }
+  };
+
+  set_node(x - 1, y);
+  set_node(x + 1, y);
+  set_node(x, y - 1);
+  set_node(x, y + 1);
+
+  result
+}
+
+fn get_node (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) -> Option<&Node> {
+  let index = get_node_index(x, y, width);
+  if index < nodes.len() {
+    match &nodes[index] {
+      Some (node) => Some(node),
+      None => None
+    }
+  } else {
+    None
+  }
+}
+
+fn get_node_index (x: usize, y: usize, width: usize) -> usize {
+  return y * width + x
 }
 
 fn get_distance (node_a: &[usize], node_b: &[usize]) -> u32 {
