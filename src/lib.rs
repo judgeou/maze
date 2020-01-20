@@ -1,6 +1,8 @@
 extern crate image;
 extern crate lab;
 
+use std::collections::BinaryHeap;
+use std::cmp::Ordering;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 use image::GenericImageView;
@@ -26,6 +28,7 @@ pub fn main_js() -> Result<(), JsValue> {
     Ok(())
 }
 
+#[derive(Eq)]
 struct Node {
   pub x: usize,
   pub y: usize,
@@ -53,6 +56,24 @@ impl Node {
       is_path: true,
       next_nodes: vec![]
     }
+  }
+}
+
+impl Ord for Node {
+  fn cmp (&self, other: &Self) -> Ordering {
+    other.distance.cmp(&self.distance)
+  }
+}
+
+impl PartialOrd for Node {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.cmp(other))
+  }
+}
+
+impl PartialEq for Node {
+  fn eq(&self, other: &Self) -> bool {
+    self.distance == other.distance
   }
 }
 
@@ -86,9 +107,44 @@ pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
-pub fn solve_maze (matrix: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, wdith: usize, height: usize) -> i32 {
-  let nodes = build_nodes(&matrix, &end, wdith, height);
+pub fn solve_maze (matrix: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, width: usize, height: usize) -> i32 {
+  let mut nodes = build_nodes(&matrix, &end, width, height);
+  let start_node = get_node(&nodes, start[0], start[1], width);
+  let end_node = get_node(&nodes, end[0], end[1], width);
+  if start_node.is_some() && end_node.is_some() {
+    let path = build_path(start_node.unwrap(), end_node.unwrap());
+  } else {
+    // 不可到达
+  }
   nodes.len() as i32
+}
+
+fn build_path (start_node: &Node, end_node: &Node) -> i32 {
+  let mut checkCount = 0;
+  
+  let mut queue = BinaryHeap::new();
+  queue.push(start_node);
+
+  loop {
+    let node = queue.peek();
+    match node {
+      Some (node) => {
+        checkCount += 1;
+        {
+          use std::ops::DerefMut;
+          let mut node = queue.peek_mut().unwrap();
+          let n: &mut Node = node.deref_mut();
+          // let nn: &mut Node = (*n);
+          n.distance = 1;
+        }
+
+        queue.pop();
+      },
+      None => break
+    }
+  }
+
+  1
 }
 
 /// 构建图结构
@@ -115,7 +171,8 @@ fn build_nodes (matrix: &Box<[u8]>, end: &Box<[usize]>, width: usize, height: us
     match node {
       Some(node_v) => {
         let next = get_next_nodes(&nodes, node_v.x, node_v.y, width);
-        
+        let node_mut = &mut nodes[i];
+        node_mut.as_mut().unwrap().next_nodes = next;
       },
       None => {}
     }
@@ -129,15 +186,14 @@ fn get_next_nodes (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) 
 
   let mut set_node = |x: usize, y: usize| {
     let node = get_node(nodes, x, y, width);
-    match node {
-      Some(node) => result.push(get_node_index(x, y, width)),
-      None => {}
+    if node.is_some() {
+      result.push(get_node_index(x, y, width));
     }
   };
 
-  set_node(x - 1, y);
+  if x > 0 { set_node(x - 1, y); }
   set_node(x + 1, y);
-  set_node(x, y - 1);
+  if y > 0 { set_node(x, y - 1); }
   set_node(x, y + 1);
 
   result
