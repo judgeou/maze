@@ -43,7 +43,7 @@ export default {
   data () {
     return {
       msg: '',
-      imgUrl: require('../assets/maze.jpg'),
+      imgUrl: require('../assets/mazegreen.jpg'),
       mapArr: [],
       clickPoints: [],
       width: 0,
@@ -65,6 +65,7 @@ export default {
     },
     goSolve (startXY, endXY, width, height) {
       const { paths, checkCount } = solveMaze(this.mapArr, startXY, endXY, width, height)
+      console.log(paths)
       const { canvas } = this.$refs
       const context = canvas.getContext('2d')
       context.fillStyle = "#FF0000"

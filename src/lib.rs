@@ -28,6 +28,14 @@ pub fn main_js() -> Result<(), JsValue> {
     Ok(())
 }
 
+fn log (s: &str) {
+  console::log_1(&JsValue::from_str(s));
+}
+
+fn log_i32 (s: i32) {
+  console::log_1(&JsValue::from(s));
+} 
+
 #[derive(Eq)]
 struct Node {
   pub x: usize,
@@ -73,8 +81,14 @@ impl PartialOrd for Node {
 
 impl PartialEq for Node {
   fn eq(&self, other: &Self) -> bool {
-    self.distance == other.distance
+    self.x == other.x && self.y == other.y
   }
+}
+
+unsafe fn r<T>(rf: &T) -> &mut T {
+  let const_ptr = rf as *const T;
+  let mut_ptr = const_ptr as *mut T;
+  &mut *mut_ptr
 }
 
 #[wasm_bindgen]
@@ -108,43 +122,63 @@ pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>) -> Vec<u8> {
 
 #[wasm_bindgen]
 pub fn solve_maze (matrix: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, width: usize, height: usize) -> i32 {
-  let mut nodes = build_nodes(&matrix, &end, width, height);
+  let nodes = build_nodes(&matrix, &end, width, height);
   let start_node = get_node(&nodes, start[0], start[1], width);
   let end_node = get_node(&nodes, end[0], end[1], width);
+
   if start_node.is_some() && end_node.is_some() {
-    let path = build_path(start_node.unwrap(), end_node.unwrap());
+    let path = build_path(&nodes, start_node.unwrap(), end_node.unwrap(), width);
+    return path;
   } else {
     // 不可到达
+    0
   }
-  nodes.len() as i32
 }
 
-fn build_path (start_node: &Node, end_node: &Node) -> i32 {
-  let mut checkCount = 0;
+fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, width: usize) -> i32 {
+  let mut check_count = 0;
   
   let mut queue = BinaryHeap::new();
   queue.push(start_node);
 
   loop {
-    let node = queue.peek();
+    let node = queue.pop();
     match node {
       Some (node) => {
-        checkCount += 1;
-        {
-          use std::ops::DerefMut;
-          let mut node = queue.peek_mut().unwrap();
-          let n: &mut Node = node.deref_mut();
-          // let nn: &mut Node = (*n);
-          n.distance = 1;
+        check_count += 1;
+        unsafe {
+          r(node).passed = true;
         }
 
-        queue.pop();
+        for &n in &node.next_nodes {
+          let next = nodes[n].as_ref().unwrap();
+          if next.passed == false {
+            unsafe {
+              let next_r = r(next);
+              next_r.parent = Some(get_node_index(node.x, node.y, width));
+              next_r.start_distance = node.start_distance + 1;
+
+              if !next.is_queue {
+                queue.push(next);
+                next_r.is_queue = true;
+              }
+
+              if next == end_node {
+                log("wasm solve!");
+                return check_count;
+              }
+            }
+          }
+        }
+
       },
-      None => break
+      None => {
+        break;
+      }
     }
   }
 
-  1
+  check_count
 }
 
 /// 构建图结构
