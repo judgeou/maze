@@ -102,7 +102,12 @@ export default {
           this.msg = '正在计算最短路径。。。'
           await this.$nextTick()
           const { paths, checkCount } = await this.goSolve(startPoint, endPoint)
-          this.msg = `成功计算最短路径，实际距离 ${paths.length / 2}`
+
+          if (paths.length > 2) {
+            this.msg = `成功计算最短路径，实际距离 ${paths.length / 2}`
+          } else {
+            this.msg = `不可到达`
+          }
         } catch (err) {
           this.msg = err
           throw err

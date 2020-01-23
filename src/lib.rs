@@ -32,10 +32,6 @@ fn log (s: &str) {
   console::log_1(&JsValue::from_str(s));
 }
 
-fn log_i32 (s: i32) {
-  console::log_1(&JsValue::from(s));
-} 
-
 #[derive(Eq)]
 struct Node {
   pub x: usize,
@@ -46,8 +42,7 @@ struct Node {
   pub passed: bool,
   pub is_queue: bool,
   pub parent: Option<usize>, // 存储Node集合的下标
-  pub is_path: bool,
-  pub next_nodes: Vec<usize> // 存储Node集合的下标的集合
+  pub next_nodes: [Option<usize>; 4] // 存储Node集合的下标的集合
 }
 
 impl Node {
@@ -61,8 +56,7 @@ impl Node {
       passed: false,
       is_queue: false,
       parent: None,
-      is_path: true,
-      next_nodes: vec![]
+      next_nodes: [None; 4]
     }
   }
 }
@@ -171,28 +165,32 @@ fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, wi
           r(node).passed = true;
         }
 
-        for &n in &node.next_nodes {
-          let next = nodes[n].as_ref().unwrap();
-          if next.passed == false {
-            unsafe {
-              let next_r = r(next);
-              next_r.parent = Some(get_node_index(node.x, node.y, width));
-              next_r.start_distance = node.start_distance + 1;
-              next_r.distance = next_r.start_distance + next_r.end_distance;
-
-              if !next.is_queue {
-                queue.push(next);
-                next_r.is_queue = true;
+        for n in &node.next_nodes {
+          match n {
+            Some (n) => {
+              let next = nodes[*n].as_ref().unwrap();
+              if next.passed == false {
+                unsafe {
+                  let next_r = r(next);
+                  next_r.parent = Some(get_node_index(node.x, node.y, width));
+                  next_r.start_distance = node.start_distance + 1;
+                  next_r.distance = next_r.start_distance + next_r.end_distance;
+    
+                  if !next.is_queue {
+                    queue.push(next);
+                    next_r.is_queue = true;
+                  }
+    
+                  if next == end_node {
+                    log("wasm solve!");
+                    return check_count;
+                  }
+                }
               }
-
-              if next == end_node {
-                log("wasm solve!");
-                return check_count;
-              }
-            }
+            },
+            None => {}
           }
         }
-
       },
       None => {
         break;
@@ -237,20 +235,20 @@ fn build_nodes (matrix: &Vec<u8>, end: &Box<[usize]>, width: usize, height: usiz
   nodes
 }
 
-fn get_next_nodes (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) -> Vec<usize> {
-  let mut result = vec![];
+fn get_next_nodes (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) -> [Option<usize>; 4] {
+  let mut result = [None; 4];
 
-  let mut set_node = |x: usize, y: usize| {
+  let mut set_node = |x: usize, y: usize, i: usize| {
     let node = get_node(nodes, x, y, width);
     if node.is_some() {
-      result.push(get_node_index(x, y, width));
+      result[i] = Some(get_node_index(x, y, width));
     }
   };
 
-  if x > 0 { set_node(x - 1, y); }
-  set_node(x + 1, y);
-  if y > 0 { set_node(x, y - 1); }
-  set_node(x, y + 1);
+  if x > 0 { set_node(x - 1, y, 0); }
+  set_node(x + 1, y, 1);
+  if y > 0 { set_node(x, y - 1, 2); }
+  set_node(x, y + 1, 3);
 
   result
 }
