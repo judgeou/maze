@@ -32,10 +32,16 @@ fn log (s: &str) {
   console::log_1(&JsValue::from_str(s));
 }
 
+fn log_i32 (s: i32) {
+  console::log_1(&JsValue::from(s));
+}
+
 #[derive(Eq)]
 struct Node {
   pub x: usize,
   pub y: usize,
+  pub color: [u8; 3],
+  pub color_distance: u32,
   pub end_distance: u32,
   pub start_distance: u32,
   pub distance: u32,
@@ -50,6 +56,8 @@ impl Node {
     Node {
       x: 0,
       y: 0,
+      color: [0; 3],
+      color_distance: 0,
       end_distance: 0,
       start_distance: 0,
       distance: 0,
@@ -87,61 +95,49 @@ unsafe fn r<T>(rf: &T) -> &mut T {
 
 #[wasm_bindgen]
 pub fn go_solve (buffer: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>) -> Vec<usize> {
-  let (matrix, width, height) = gen_map_array(&buffer, &start);
-  let paths = solve_maze(&matrix, &start, &end, width as usize, height as usize);
+  let (mut matrix, width, height) = gen_map_array(&buffer, &start, &end);
+  let paths = solve_maze(&mut matrix, &start, &end, width as usize, height as usize);
   paths
 }
 
-fn gen_map_array (buffer: &Box<[u8]>, start_point: &Box<[usize]>) -> (Vec<u8>, u32, u32) {
+fn gen_map_array (buffer: &Box<[u8]>, start_point: &Box<[usize]>, end: &Box<[usize]>) -> (Vec<Node>, u32, u32) {
   let img = image::load_from_memory(&buffer).unwrap();
   let (width, height) = img.dimensions();
-
-  let start_pixel = img.get_pixel(start_point[0] as u32, start_point[1] as u32);
-  let walk_color = [start_pixel[0], start_pixel[1], start_pixel[2]];
 
   let mut result = Vec::with_capacity((width * height) as usize);
   for h in 0..height {
     for w in 0..width {
       let pixel = img.get_pixel(w, h);
-      let red = pixel[0];
-      let green = pixel[1];
-      let blue = pixel[2];
-
-      let color_distance = color_diff_lab(&walk_color, &[ red, green, blue ]);
-      let max_diff = 81.0;
-      if color_distance < max_diff {
-        result.push(1)
-      } else {
-        result.push(0);
-      }
+      let mut node = Node::new();
+      node.x = w as usize;
+      node.y = h as usize;
+      node.color = [pixel[0], pixel[1], pixel[2]];
+      node.end_distance = get_distance(start_point, end);
+      result.push(node);
     } 
   }
 
   return (result, width, height)
 }
 
-fn solve_maze (matrix: &Vec<u8>, start: &Box<[usize]>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<usize> {
-  let nodes = build_nodes(&matrix, &end, width, height);
-  let start_node = get_node(&nodes, start[0], start[1], width);
-  let end_node = get_node(&nodes, end[0], end[1], width);
+fn solve_maze (matrix: &mut Vec<Node>, start: &Box<[usize]>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<usize> {
+  build_nodes(matrix, width, height);
+  let start_node = get_node(matrix, start[0], start[1], width);
+  let end_node = get_node(matrix, end[0], end[1], width);
 
-  if start_node.is_some() && end_node.is_some() {
-    build_path(&nodes, start_node.unwrap(), end_node.unwrap(), width);
-    let paths = backtrack_path(&nodes, end_node.unwrap());
-    paths
-  } else {
-    // 不可到达
-    vec![]
-  }
+  build_path(matrix, start_node, end_node, width);
+  let paths = backtrack_path(matrix, end_node);
+
+  paths
 }
 
-fn backtrack_path (nodes: &Vec<Option<Node>>, end_node: &Node) -> Vec<usize> {
+fn backtrack_path (nodes: &Vec<Node>, end_node: &Node) -> Vec<usize> {
   let mut paths = vec![end_node.x, end_node.y];
   let mut parent = end_node.parent;
 
   while parent.is_some() {
     let index = parent.unwrap();
-    let node = nodes[index].as_ref().unwrap();
+    let node = &nodes[index];
     paths.push(node.x);
     paths.push(node.y);
     parent = node.parent;
@@ -150,7 +146,7 @@ fn backtrack_path (nodes: &Vec<Option<Node>>, end_node: &Node) -> Vec<usize> {
   paths
 }
 
-fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, width: usize) -> i32 {
+fn build_path (nodes: &Vec<Node>, start_node: &Node, end_node: &Node, width: usize) -> i32 {
   let mut check_count = 0;
   
   let mut queue = BinaryHeap::new();
@@ -168,13 +164,14 @@ fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, wi
         for n in &node.next_nodes {
           match n {
             Some (n) => {
-              let next = nodes[*n].as_ref().unwrap();
+              let next = &nodes[*n];
               if next.passed == false {
                 unsafe {
                   let next_r = r(next);
                   next_r.parent = Some(get_node_index(node.x, node.y, width));
                   next_r.start_distance = node.start_distance + 1;
-                  next_r.distance = next_r.start_distance + next_r.end_distance;
+                  next_r.color_distance = color_diff_lab(&start_node.color, &next_r.color) as u32 * 150;
+                  next_r.distance = next_r.start_distance + next_r.end_distance + next_r.color_distance;
     
                   if !next.is_queue {
                     queue.push(next);
@@ -202,46 +199,23 @@ fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, wi
 }
 
 /// 构建图结构
-fn build_nodes (matrix: &Vec<u8>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<Option<Node>> {
-  let mut nodes = vec![];
-  
-  for y in 0..height {
-    for x in 0..width {
-      let v = matrix[y * width + x];
-      if v > 0 {
-        let mut node = Node::new();
-        node.x = x;
-        node.y = y;
-        node.end_distance = get_distance(&[x, y], end);
-        nodes.push(Some(node));
-      } else {
-        nodes.push(None);
-      }
-    }
+fn build_nodes (matrix: &mut Vec<Node>, width: usize, height: usize) {
+  for i in 0..matrix.len() {
+    let node = &matrix[i];
+    let next = get_next_nodes(node, width, height);
+    let node_mut = &mut matrix[i];
+    node_mut.next_nodes = next;
   }
-
-  for i in 0..nodes.len() {
-    let node = &nodes[i];
-    match node {
-      Some(node_v) => {
-        let next = get_next_nodes(&nodes, node_v.x, node_v.y, width);
-        let node_mut = &mut nodes[i];
-        node_mut.as_mut().unwrap().next_nodes = next;
-      },
-      None => {}
-    }
-  }
-
-  nodes
 }
 
-fn get_next_nodes (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) -> [Option<usize>; 4] {
+fn get_next_nodes (node: &Node, width: usize, height: usize) -> [Option<usize>; 4] {
   let mut result = [None; 4];
+  let x = node.x;
+  let y = node.y;
 
-  let mut set_node = |x: usize, y: usize, i: usize| {
-    let node = get_node(nodes, x, y, width);
-    if node.is_some() {
-      result[i] = Some(get_node_index(x, y, width));
+  let mut set_node = |xn: usize, yn: usize, i: usize| {
+    if xn < width && yn < height {
+      result[i] = Some(get_node_index(xn, yn, width));
     }
   };
 
@@ -253,16 +227,9 @@ fn get_next_nodes (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) 
   result
 }
 
-fn get_node (nodes: &Vec<Option<Node>>, x: usize, y: usize, width: usize) -> Option<&Node> {
+fn get_node (nodes: &Vec<Node>, x: usize, y: usize, width: usize) -> &Node {
   let index = get_node_index(x, y, width);
-  if index < nodes.len() {
-    match &nodes[index] {
-      Some (node) => Some(node),
-      None => None
-    }
-  } else {
-    None
-  }
+  &nodes[index]
 }
 
 fn get_node_index (x: usize, y: usize, width: usize) -> usize {
