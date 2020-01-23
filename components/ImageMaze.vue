@@ -15,9 +15,6 @@
 
 <script>
 import { solveMaze } from '../lib/matrix'
-import Jimp from 'jimp'
-import { rgb2lab, deltaE } from '../lib/color'
-import { setTimeout } from 'timers';
 
 function colorDiff (c1, c2) {
   return deltaE(rgb2lab([ c1.r, c1.g, c1.b ]), rgb2lab([ c2.r, c2.g, c2.b ]))
@@ -43,7 +40,7 @@ export default {
   data () {
     return {
       msg: '',
-      imgUrl: require('../assets/mazegreen.jpg'),
+      imgUrl: require('../assets/maze.png'),
       mapArr: [],
       clickPoints: [],
       width: 0,
@@ -63,14 +60,14 @@ export default {
       this.clearPaths()
       vm.msg = '点击图片任意位置决定起点与终点'
     },
-    goSolve (startXY, endXY, width, height) {
-      const { paths, checkCount } = solveMaze(this.mapArr, startXY, endXY, width, height)
-      console.log(paths)
+    goSolve (mapArr, startXY, endXY, width, height) {
+      const checkCount = 0
+      const paths = this.$root.native.solve_maze(mapArr, startXY, endXY, width, height)
       const { canvas } = this.$refs
       const context = canvas.getContext('2d')
       context.fillStyle = "#FF0000"
-      for (let path of paths) {
-        context.fillRect(path[0], path[1], 1, 1)
+      for (let i = 0; i < paths.length; i += 2) {
+        context.fillRect(paths[i], paths[i + 1], 1, 1)
       }
       return {
         paths,
@@ -96,20 +93,16 @@ export default {
       }
       if (length >= 2) {
         this.msg = `终点: (x: ${e.offsetX}, y: ${e.offsetY}), 正在扫描可通行区域`
-        // this.msg = '正在识别可通行节点。。。'
-        const mapArr = new Array(width * height)
 
         const startPoint = clickPoints[length - 2]
         const endPoint = clickPoints[length - 1]
 
         try {
-          this.mapArr = await this.genMapArr(startPoint, endPoint)
+          const mapArr = await this.genMapArr(startPoint, endPoint)
           this.msg = '正在计算最短路径。。。'
           await this.$nextTick()
-          let r = vm.$root.native.solve_maze(this.mapArr, clickPoints[length - 2], clickPoints[length - 1], width, height)
-          console.log(r)
-          const { paths, checkCount } = this.goSolve(clickPoints[length - 2], clickPoints[length - 1], width, height)
-          this.msg = `成功计算最短路径，实际距离 ${paths.length}，探索了节点数 ${checkCount}`
+          const { paths, checkCount } = this.goSolve(mapArr, clickPoints[length - 2], clickPoints[length - 1], width, height)
+          this.msg = `成功计算最短路径，实际距离 ${paths.length / 2}`
         } catch (err) {
           this.msg = err
           throw err

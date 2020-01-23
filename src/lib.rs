@@ -121,18 +121,34 @@ pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
-pub fn solve_maze (matrix: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, width: usize, height: usize) -> i32 {
+pub fn solve_maze (matrix: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, width: usize, height: usize) -> Vec<usize> {
   let nodes = build_nodes(&matrix, &end, width, height);
   let start_node = get_node(&nodes, start[0], start[1], width);
   let end_node = get_node(&nodes, end[0], end[1], width);
 
   if start_node.is_some() && end_node.is_some() {
-    let path = build_path(&nodes, start_node.unwrap(), end_node.unwrap(), width);
-    return path;
+    let check_count = build_path(&nodes, start_node.unwrap(), end_node.unwrap(), width);
+    let paths = backtrack_path(&nodes, end_node.unwrap());
+    paths
   } else {
     // 不可到达
-    0
+    vec![]
   }
+}
+
+fn backtrack_path (nodes: &Vec<Option<Node>>, end_node: &Node) -> Vec<usize> {
+  let mut paths = vec![end_node.x, end_node.y];
+  let mut parent = end_node.parent;
+
+  while parent.is_some() {
+    let index = parent.unwrap();
+    let node = nodes[index].as_ref().unwrap();
+    paths.push(node.x);
+    paths.push(node.y);
+    parent = node.parent;
+  }
+
+  paths
 }
 
 fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, width: usize) -> i32 {
@@ -157,6 +173,7 @@ fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, wi
               let next_r = r(next);
               next_r.parent = Some(get_node_index(node.x, node.y, width));
               next_r.start_distance = node.start_distance + 1;
+              next_r.distance = next_r.start_distance + next_r.end_distance;
 
               if !next.is_queue {
                 queue.push(next);
