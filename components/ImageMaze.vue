@@ -60,9 +60,10 @@ export default {
       this.clearPaths()
       vm.msg = '点击图片任意位置决定起点与终点'
     },
-    goSolve (mapArr, startXY, endXY, width, height) {
+    async goSolve (startXY, endXY) {
       const checkCount = 0
-      const paths = this.$root.native.solve_maze(mapArr, startXY, endXY, width, height)
+      let buffer = await fetchFile(this.imgUrl)
+      const paths = this.$root.native.go_solve(buffer, startXY, endXY)
       const { canvas } = this.$refs
       const context = canvas.getContext('2d')
       context.fillStyle = "#FF0000"
@@ -84,7 +85,7 @@ export default {
       return result
     },
     async onCanvasClick (e) {
-      const { clickPoints, width, height } = this
+      const { clickPoints } = this
       const { image } = this.$refs
       clickPoints.push([e.offsetX, e.offsetY])
       const { length } = clickPoints
@@ -98,10 +99,9 @@ export default {
         const endPoint = clickPoints[length - 1]
 
         try {
-          const mapArr = await this.genMapArr(startPoint, endPoint)
           this.msg = '正在计算最短路径。。。'
           await this.$nextTick()
-          const { paths, checkCount } = this.goSolve(mapArr, clickPoints[length - 2], clickPoints[length - 1], width, height)
+          const { paths, checkCount } = await this.goSolve(startPoint, endPoint)
           this.msg = `成功计算最短路径，实际距离 ${paths.length / 2}`
         } catch (err) {
           this.msg = err

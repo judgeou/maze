@@ -92,11 +92,17 @@ unsafe fn r<T>(rf: &T) -> &mut T {
 }
 
 #[wasm_bindgen]
-pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>) -> Vec<u8> {
+pub fn go_solve (buffer: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>) -> Vec<usize> {
+  let (matrix, width, height) = gen_map_array(&buffer, &start);
+  let paths = solve_maze(&matrix, &start, &end, width as usize, height as usize);
+  paths
+}
+
+fn gen_map_array (buffer: &Box<[u8]>, start_point: &Box<[usize]>) -> (Vec<u8>, u32, u32) {
   let img = image::load_from_memory(&buffer).unwrap();
   let (width, height) = img.dimensions();
 
-  let start_pixel = img.get_pixel(start_point[0], start_point[1]);
+  let start_pixel = img.get_pixel(start_point[0] as u32, start_point[1] as u32);
   let walk_color = [start_pixel[0], start_pixel[1], start_pixel[2]];
 
   let mut result = Vec::with_capacity((width * height) as usize);
@@ -117,17 +123,16 @@ pub fn gen_map_array (buffer: Box<[u8]>, start_point: Box<[u32]>) -> Vec<u8> {
     } 
   }
 
-  return result;
+  return (result, width, height)
 }
 
-#[wasm_bindgen]
-pub fn solve_maze (matrix: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, width: usize, height: usize) -> Vec<usize> {
+fn solve_maze (matrix: &Vec<u8>, start: &Box<[usize]>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<usize> {
   let nodes = build_nodes(&matrix, &end, width, height);
   let start_node = get_node(&nodes, start[0], start[1], width);
   let end_node = get_node(&nodes, end[0], end[1], width);
 
   if start_node.is_some() && end_node.is_some() {
-    let check_count = build_path(&nodes, start_node.unwrap(), end_node.unwrap(), width);
+    build_path(&nodes, start_node.unwrap(), end_node.unwrap(), width);
     let paths = backtrack_path(&nodes, end_node.unwrap());
     paths
   } else {
@@ -199,7 +204,7 @@ fn build_path (nodes: &Vec<Option<Node>>, start_node: &Node, end_node: &Node, wi
 }
 
 /// 构建图结构
-fn build_nodes (matrix: &Box<[u8]>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<Option<Node>> {
+fn build_nodes (matrix: &Vec<u8>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<Option<Node>> {
   let mut nodes = vec![];
   
   for y in 0..height {
