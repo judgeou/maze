@@ -94,9 +94,9 @@ unsafe fn r<T>(rf: &T) -> &mut T {
 }
 
 #[wasm_bindgen]
-pub fn go_solve (buffer: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>) -> Vec<usize> {
+pub fn go_solve (buffer: Box<[u8]>, start: Box<[usize]>, end: Box<[usize]>, color_diff_param: u32) -> Vec<usize> {
   let (mut matrix, width, height) = gen_map_array(&buffer, &start, &end);
-  let paths = solve_maze(&mut matrix, &start, &end, width as usize, height as usize);
+  let paths = solve_maze(&mut matrix, &start, &end, width as usize, height as usize, color_diff_param);
   paths
 }
 
@@ -120,12 +120,12 @@ fn gen_map_array (buffer: &Box<[u8]>, start_point: &Box<[usize]>, end: &Box<[usi
   return (result, width, height)
 }
 
-fn solve_maze (matrix: &mut Vec<Node>, start: &Box<[usize]>, end: &Box<[usize]>, width: usize, height: usize) -> Vec<usize> {
+fn solve_maze (matrix: &mut Vec<Node>, start: &Box<[usize]>, end: &Box<[usize]>, width: usize, height: usize, color_diff_param: u32) -> Vec<usize> {
   build_nodes(matrix, width, height);
   let start_node = get_node(matrix, start[0], start[1], width);
   let end_node = get_node(matrix, end[0], end[1], width);
 
-  build_path(matrix, start_node, end_node, width);
+  build_path(matrix, start_node, end_node, width, color_diff_param);
   let paths = backtrack_path(matrix, end_node);
 
   paths
@@ -146,7 +146,7 @@ fn backtrack_path (nodes: &Vec<Node>, end_node: &Node) -> Vec<usize> {
   paths
 }
 
-fn build_path (nodes: &Vec<Node>, start_node: &Node, end_node: &Node, width: usize) -> i32 {
+fn build_path (nodes: &Vec<Node>, start_node: &Node, end_node: &Node, width: usize, color_diff_param: u32) -> i32 {
   let mut check_count = 0;
   
   let mut queue = BinaryHeap::new();
@@ -170,7 +170,7 @@ fn build_path (nodes: &Vec<Node>, start_node: &Node, end_node: &Node, width: usi
                   let next_r = r(next);
                   next_r.parent = Some(get_node_index(node.x, node.y, width));
                   next_r.start_distance = node.start_distance + 1;
-                  next_r.color_distance = color_diff_lab(&start_node.color, &next_r.color) as u32 * 150;
+                  next_r.color_distance = color_diff_lab(&start_node.color, &next_r.color) as u32 * color_diff_param;
                   next_r.distance = next_r.start_distance + next_r.end_distance + next_r.color_distance;
     
                   if !next.is_queue {

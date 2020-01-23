@@ -1,6 +1,7 @@
 <template>
   <div>
     <div>
+      值越小越容易穿墙：<input type="number" v-model="colorDiffParam" />
       <input type="file" accept="image/*" @change="onFile">    <button @click="clearPaths">重置</button>
       <b>{{ msg }}</b>
     </div>
@@ -44,7 +45,8 @@ export default {
       mapArr: [],
       clickPoints: [],
       width: 0,
-      height: 0
+      height: 0,
+      colorDiffParam: 150
     }
   },
   methods: {
@@ -63,12 +65,12 @@ export default {
     async goSolve (startXY, endXY) {
       const checkCount = 0
       let buffer = await fetchFile(this.imgUrl)
-      const paths = this.$root.native.go_solve(buffer, startXY, endXY)
+      const paths = this.$root.native.go_solve(buffer, startXY, endXY, Number(this.colorDiffParam))
       const { canvas } = this.$refs
       const context = canvas.getContext('2d')
       context.fillStyle = "#FF0000"
       for (let i = 0; i < paths.length; i += 2) {
-        context.fillRect(paths[i], paths[i + 1], 1, 1)
+        context.fillRect(paths[i], paths[i + 1], 2, 2)
       }
       return {
         paths,
